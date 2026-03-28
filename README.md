@@ -254,10 +254,4 @@ Polar Mapper V0.4.3/
 
 ## License
 
-如果你准备公开发布，建议补充一个许可证文件，例如：
-
-- `MIT`
-- `Apache-2.0`
-- 或者仅保留 `All rights reserved`
-
-当前仓库尚未附带独立 LICENSE 文件。
+MIT. See [`LICENSE`](./LICENSE).
