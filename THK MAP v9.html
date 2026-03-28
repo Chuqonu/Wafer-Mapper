@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wafer Profile Visualization Tool</title>
+    <script src="coords.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 20px; background: #f4f6f9; color: #333; }
+        .container { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+        .input-section { flex: 1; min-width: 260px; max-width: 320px; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .io-bar { display: flex; gap: 10px; margin-bottom: 15px; padding: 10px; background: #eef2f5; border-radius: 6px; border: 1px solid #dce1e6; }
+        .io-btn { flex: 1; padding: 8px; font-size: 13px; cursor: pointer; border-radius: 4px; border: none; font-weight: bold; text-align: center; color: #fff; transition: 0.15s; }
+        .btn-exp { background: #17a2b8; } .btn-exp:hover { background: #138496; }
+        .btn-imp { background: #ffc107; color: #333; } .btn-imp:hover { background: #e0a800; }
+        .input-group { margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px; border: 1px solid #e9ecef; }
+        label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 13px; color: #2c3e50; border-bottom: 2px solid #dee2e6; padding-bottom: 4px; }
+        textarea { width: 100%; height: 110px; font-family: monospace; padding: 6px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; resize: vertical; margin-top: 5px; }
+        textarea:focus { border-color: #0056b3; outline: none; }
+        .btn { padding: 4px 6px; font-size: 11px; border: 1px solid transparent; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.15s; }
+        .action-btn { width: 100%; padding: 12px; background: #0056b3; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: bold; margin-top: 5px; box-shadow: 0 2px 4px rgba(0,86,179,0.3); }
+        .action-btn:hover { background: #004494; }
+        .toolbar-row { display: flex; gap: 4px; margin-bottom: 6px; }
+        .toolbar-row select, .toolbar-row input { flex: 1; padding: 4px; border: 1px solid #ced4da; border-radius: 4px; font-size: 11px; min-width: 0; }
+        .btn-load { background: #e2e6ea; color: #333; border-color: #dae0e5; } .btn-load:hover { background: #d3d9df; }
+        .btn-save { background: #28a745; color: #fff; } .btn-save:hover { background: #218838; }
+        .btn-del { background: #dc3545; color: #fff; } .btn-del:hover { background: #c82333; }
+        .btn-clear { background: #6c757d; color: #fff; } .btn-clear:hover { background: #5a6268; }
+        .plot-section { flex: 2; min-width: 600px; display: flex; flex-direction: column; gap: 15px; }
+        .card { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .controls { margin-bottom: 10px; display: flex; gap: 10px; align-items: center; background: #f8f9fa; padding: 6px; border-radius: 6px; border: 1px solid #eee; }
+        .plot-select { padding: 4px; border-radius: 4px; border: 1px solid #ccc; font-size: 12px; font-weight: bold; color: #0056b3; }
+        .header-row { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #eee; padding-bottom: 6px; margin-bottom: 10px; }
+        h2 { font-size: 16px; margin: 0; color: #2c3e50; }
+        .map-info-block { font-family: monospace; font-size: 11px; color: #888; position: absolute; top: 15px; right: 15px; text-align: right; line-height: 1.6; }
+        .stats-history { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; }
+        .stats-history::-webkit-scrollbar { height: 6px; }
+        .stats-history::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+        .stats-entry { min-width: 160px; max-width: 200px; flex-shrink: 0; background: #f8f9fa; border-radius: 8px; padding: 10px 12px; border: 1px solid #e0e0e0; cursor: pointer; transition: 0.15s; }
+        .stats-entry:hover { background: #f0f0f0; }
+        .stats-entry.current { background: #eef4ff; border: 2px solid #0056b3; }
+        .stats-entry-title { font-size: 11px; font-weight: bold; color: #0056b3; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+        .stats-entry.current .stats-entry-title { color: #0056b3; }
+        .stats-entry:not(.current) .stats-entry-title { color: #888; }
+        .stats-row { display: flex; justify-content: space-between; font-size: 11px; padding: 2px 0; }
+        .stats-row .s-label { color: #888; font-weight: bold; }
+        .stats-row .s-value { color: #333; font-family: monospace; }
+        .stats-notes { font-size: 10px; color: #666; padding-top: 6px; border-top: 1px dashed #ddd; margin-top: 6px; min-height: 14px; word-break: break-word; max-height: 60px; overflow-y: auto; font-style: italic; }
+        .map-controls-bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 8px 10px; background: #f8f9fa; border-radius: 6px; border: 1px solid #eee; margin-top: 8px; font-size: 12px; }
+        .map-controls-bar label { display: inline; border: none; margin: 0; padding: 0; font-size: 12px; font-weight: bold; color: #0056b3; cursor: pointer; }
+        .map-controls-bar .sep { width: 1px; height: 20px; background: #ddd; }
+        #mapNotesInput { width: 100%; padding: 4px 8px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; color: #555; border: 1px dashed #ccc; border-radius: 4px; background: #fafbfc; box-sizing: border-box; margin-top: 4px; outline: none; transition: border-color 0.2s; }
+        #mapNotesInput:focus { border-color: #0056b3; background: #fff; color: #333; }
+        #mapNotesInput::placeholder { color: #bbb; font-style: italic; }
+    </style>
+</head>
+<body>
+    <h1 style="margin-bottom: 5px; font-size: 22px;">Wafer Profile Visualization Tool</h1>
+    <div class="container">
+        <div class="input-section">
+            <div class="io-bar">
+                <button class="io-btn btn-exp" onclick="exportData()">💾 Export Backup</button>
+                <label class="io-btn btn-imp" style="margin:0;">📁 Import Data
+                    <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importData(event)">
+                </label>
+            </div>
+            <div class="input-group">
+                <label>XY Coord Pattern</label>
+                <select id="xyPatternSelect" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:13px; font-weight:bold; color:#0056b3;">
+                    <option value="49P">49 Points</option>
+                    <option value="361P">361 Points</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Wafer 1 THK</label>
+                <div class="toolbar-row">
+                    <select id="thkSelect1" onchange="loadThkAndAutoDetect()"><option value="">-- Saved THK --</option></select>
+                    <button class="btn btn-load" onclick="loadD('thk', 'w1Input', 'thkSelect1')">Load</button>
+                    <button class="btn btn-del" onclick="delD('thk', 'thkSelect1')">Del</button>
+                </div>
+                <div class="toolbar-row">
+                    <input id="thkName1" placeholder="Name to save W1...">
+                    <button class="btn btn-save" onclick="saveD('thk', 'w1Input', 'thkName1', 'thkSelect1')">Save</button>
+                    <button class="btn btn-clear" onclick="document.getElementById('w1Input').value=''">Clr</button>
+                </div>
+                <textarea id="w1Input" placeholder="5.12&#10;5.08..."></textarea>
+            </div>
+            <div class="input-group">
+                <label>Wafer 2 THK</label>
+                <div class="toolbar-row">
+                    <select id="thkSelect2" onchange="loadD('thk', 'w2Input', 'thkSelect2')"><option value="">-- Saved THK --</option></select>
+                    <button class="btn btn-load" onclick="loadD('thk', 'w2Input', 'thkSelect2')">Load</button>
+                    <button class="btn btn-del" onclick="delD('thk', 'thkSelect2')">Del</button>
+                </div>
+                <div class="toolbar-row">
+                    <input id="thkName2" placeholder="Name to save W2...">
+                    <button class="btn btn-save" onclick="saveD('thk', 'w2Input', 'thkName2', 'thkSelect2')">Save</button>
+                    <button class="btn btn-clear" onclick="document.getElementById('w2Input').value=''">Clr</button>
+                </div>
+                <textarea id="w2Input" placeholder="Paste data here for W2-W1..."></textarea>
+            </div>
+            <button class="action-btn" onclick="processData()">Generate Maps</button>
+        </div>
+
+        <div class="plot-section">
+            <div class="card" id="statsCard" style="display: none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #eee; padding-bottom:6px; margin-bottom:10px;">
+                    <h2>Wafer Statistics</h2>
+                    <button class="btn btn-clear" onclick="clearStatsHistory()" style="font-size:10px; padding:3px 8px;">Clear History</button>
+                </div>
+                <div class="stats-history" id="statsHistory"></div>
+            </div>
+
+            <div class="card" style="position: relative;">
+                <div class="header-row">
+                    <h2 id="mapTitle">2D Contour Map</h2>
+                </div>
+                <input type="text" id="mapNotesInput" placeholder="Click here to add notes..." oninput="syncNotesToStats()" style="display:none;">
+                <div id="mapInfoBlock" class="map-info-block"></div>
+                <div id="waferPlot" style="width: 100%; height: 550px;"></div>
+                <!-- Row 1: Color & Range & Levels -->
+                <div class="map-controls-bar">
+                    <label><input type="checkbox" id="showLabels" checked onchange="toggleLabels()"> Show Values</label>
+                    <div class="sep"></div>
+                    <select id="colorscaleSelect" class="plot-select" onchange="updateColorscale()" style="font-size:11px; padding:3px 6px;">
+                        <option value="Viridis" selected>Viridis</option>
+                        <option value="Turbo">Turbo</option>
+                        <option value="Jet">Jet (Classic)</option>
+                        <option value="Hot">Hot</option>
+                        <option value="YlGnBu">YlGnBu</option>
+                    </select>
+                    <div class="sep"></div>
+                    <span style="font-weight:bold; color:#555;">Range:</span>
+                    <label><input type="checkbox" id="clampAuto" checked onchange="toggleClampInputs()"> Auto</label>
+                    <input type="number" id="clampMin" placeholder="Min" step="any" style="width:70px; padding:3px 5px; border:1px solid #ccc; border-radius:4px; font-size:11px;" disabled>
+                    <span style="color:#999;">—</span>
+                    <input type="number" id="clampMax" placeholder="Max" step="any" style="width:70px; padding:3px 5px; border:1px solid #ccc; border-radius:4px; font-size:11px;" disabled>
+                    <button class="btn btn-load" onclick="updateColorRange()" style="font-size:10px; padding:3px 8px;">Apply</button>
+                    <div class="sep"></div>
+                    <span style="font-weight:bold; color:#555;">Levels:</span>
+                    <input type="number" id="contourLevels" value="20" min="3" max="100" step="1" style="width:50px; padding:3px 5px; border:1px solid #ccc; border-radius:4px; font-size:11px;">
+                    <button class="btn btn-load" onclick="updateContourLevels()" style="font-size:10px; padding:3px 8px;">Apply</button>
+                </div>
+                <!-- Row 2: IDW Power & Blur with Auto toggle -->
+                <div class="map-controls-bar" style="margin-top:4px;">
+                    <span style="font-weight:bold; color:#555;">IDW Tuning:</span>
+                    <label><input type="checkbox" id="idwAuto" checked onchange="toggleIdwAuto()"> Auto</label>
+                    <div class="sep"></div>
+                    <span style="font-weight:bold; color:#555;">Power:</span>
+                    <input type="range" id="idwPower" min="5" max="30" value="20" step="1" style="width:80px;" disabled oninput="document.getElementById('idwPowerVal').textContent=(this.value/10).toFixed(1)">
+                    <span id="idwPowerVal" style="font-family:monospace; min-width:24px;">2.0</span>
+                    <div class="sep"></div>
+                    <span style="font-weight:bold; color:#555;">Blur:</span>
+                    <input type="range" id="gaussBlur" min="0" max="12" value="6" step="1" style="width:80px;" disabled oninput="document.getElementById('gaussBlurVal').textContent=this.value">
+                    <span id="gaussBlurVal" style="font-family:monospace; min-width:16px;">6</span>
+                    <span style="color:#999; font-size:10px;">passes</span>
+                    <div class="sep"></div>
+                    <button class="btn btn-load" onclick="replotWithCurrentData()" style="font-size:10px; padding:3px 10px;">Re-plot</button>
+                </div>
+            </div>
+
+            <div class="card" id="lineCard" style="display: none;">
+                <div class="controls" style="margin:0; border:none; padding:0 0 10px 0; background:none;">
+                    <h2 style="border:none; margin:0; padding:0;">1D Line Profile</h2>
+                    <select id="lineType" class="plot-select" style="margin-left:15px;" onchange="plotLineProfile()">
+                        <option value="horizontal">Horizontal (Y≈0)</option>
+                        <option value="vertical">Vertical (X≈0)</option>
+                        <option value="circumference">Circumference (0°-360°)</option>
+                    </select>
+                </div>
+                <div id="linePlot" style="width: 100%; height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // COORD_PRESETS loaded from coords.js
+
+        let gPts = [], mRad = 0, isDelta = false, mapLbl = "Thickness";
+        let statsHistoryData = [];
+        let currentZMin = null, currentZMax = null;
+        let lastPlotN = 0; // track point count for auto-param calculation
+
+        // --- Notes persistence ---
+        const NOTES_KEY = 'wafer_app_notes';
+        function loadNotesMap() { try { return JSON.parse(localStorage.getItem(NOTES_KEY) || '{}'); } catch(e) { return {}; } }
+        function saveNoteForEntry(name, note) { let m = loadNotesMap(); if(note) m[name] = note; else delete m[name]; localStorage.setItem(NOTES_KEY, JSON.stringify(m)); }
+        function getNoteForEntry(name) { return loadNotesMap()[name] || ''; }
+
+        // --- Data Management ---
+        const getPool = (k) => JSON.parse(localStorage.getItem('wafer_app_' + k) || '{}');
+        const setPool = (k, d) => localStorage.setItem('wafer_app_' + k, JSON.stringify(d));
+        function updateDropdowns() {
+            const b = (p, txt) => `<option value="">${txt}</option>` + Object.keys(p).map(k=>`<option value="${k}">${k}</option>`).join('');
+            document.getElementById('thkSelect1').innerHTML = document.getElementById('thkSelect2').innerHTML = b(getPool('thk'), '-- Saved THK --');
+        }
+        function saveD(k, iId, nId, sId) {
+            let n = document.getElementById(nId).value.trim(), v = document.getElementById(iId).value.trim();
+            if(!n || !v) return alert("Need Name and Data!");
+            let p = getPool(k); p[n] = v; setPool(k, p);
+            document.getElementById(nId).value = ''; updateDropdowns(); document.getElementById(sId).value = n;
+        }
+        function loadD(k, iId, sId) { let n = document.getElementById(sId).value, p = getPool(k); if(n && p[n]) document.getElementById(iId).value = p[n]; }
+        function delD(k, sId) { let n = document.getElementById(sId).value; if(n && confirm(`Delete "${n}"?`)){ let p = getPool(k); delete p[n]; setPool(k, p); updateDropdowns(); } }
+        function loadThkAndAutoDetect() {
+            loadD('thk', 'w1Input', 'thkSelect1');
+            let data = document.getElementById('w1Input').value.trim(); if(!data) return;
+            let lc = data.split('\n').filter(l => l.trim() && !isNaN(parseFloat(l.trim()))).length;
+            if(lc === 49) document.getElementById('xyPatternSelect').value = '49P';
+            else if(lc === 361) document.getElementById('xyPatternSelect').value = '361P';
+        }
+
+        // Export/Import
+        function exportData() {
+            let data = { thk: getPool('thk'), statsHistory: statsHistoryData, notesMap: loadNotesMap() };
+            let blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
+            let a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'wafer_data_backup.json'; a.click();
+        }
+        function importData(e) {
+            let file = e.target.files[0]; if(!file) return;
+            let reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    let d = JSON.parse(evt.target.result);
+                    if(d.thk) setPool('thk', d.thk);
+                    if(d.notesMap) localStorage.setItem(NOTES_KEY, JSON.stringify(d.notesMap));
+                    if(d.statsHistory && Array.isArray(d.statsHistory) && d.statsHistory.length > 0) {
+                        statsHistoryData = d.statsHistory;
+                        renderStatsHistory();
+                        document.getElementById('statsCard').style.display = 'block';
+                        restoreHistoryEntry(0);
+                        document.getElementById('lineCard').style.display = 'block';
+                    }
+                    updateDropdowns();
+                    alert('Imported! (' + (d.statsHistory ? d.statsHistory.length : 0) + ' history entries)');
+                } catch(err) { alert('Invalid file.'); }
+            };
+            reader.readAsText(file); e.target.value = '';
+        }
+
+        window.onload = () => { updateDropdowns(); };
+
+        // --- UI Controls ---
+        function toggleLabels() {
+            if(document.getElementById('waferPlot').data) {
+                let s = document.getElementById('showLabels').checked;
+                Plotly.restyle('waferPlot', { mode: s?'markers+text':'none', 'marker.size': s?5:0, 'marker.opacity': s?1:0 }, [1]);
+            }
+        }
+        function getSelectedColorscale() { return isDelta ? 'RdBu' : document.getElementById('colorscaleSelect').value; }
+        function updateColorscale() { if(document.getElementById('waferPlot').data) Plotly.restyle('waferPlot', {colorscale: getSelectedColorscale()}, [0]); }
+        function toggleClampInputs() {
+            let a = document.getElementById('clampAuto').checked;
+            document.getElementById('clampMin').disabled = a; document.getElementById('clampMax').disabled = a;
+            if(a) updateColorRange();
+        }
+        function getContourLevels() { return parseInt(document.getElementById('contourLevels').value) || 20; }
+        function updateColorRange() {
+            if(!document.getElementById('waferPlot').data) return;
+            let auto = document.getElementById('clampAuto').checked, nL = getContourLevels();
+            if(auto) { Plotly.restyle('waferPlot', {zauto:true,zmin:null,zmax:null,autocontour:true,ncontours:nL}, [0]); }
+            else {
+                let mn = document.getElementById('clampMin').value!=='' ? parseFloat(document.getElementById('clampMin').value) : currentZMin;
+                let mx = document.getElementById('clampMax').value!=='' ? parseFloat(document.getElementById('clampMax').value) : currentZMax;
+                if(isNaN(mn)||isNaN(mx)) return alert("Enter valid numbers.");
+                if(mn>=mx) return alert("Min must be < Max.");
+                Plotly.restyle('waferPlot', {zauto:false,zmin:mn,zmax:mx,autocontour:false,ncontours:nL}, [0]);
+            }
+        }
+        function updateContourLevels() {
+            if(!document.getElementById('waferPlot').data) return;
+            let n = Math.max(3, Math.min(100, getContourLevels()));
+            document.getElementById('contourLevels').value = n;
+            Plotly.restyle('waferPlot', {ncontours:n, autocontour:document.getElementById('clampAuto').checked}, [0]);
+        }
+
+        // --- IDW Auto toggle ---
+        function toggleIdwAuto() {
+            let auto = document.getElementById('idwAuto').checked;
+            document.getElementById('idwPower').disabled = auto;
+            document.getElementById('gaussBlur').disabled = auto;
+            if(auto) {
+                // Set sliders to auto values based on current point count
+                applyAutoIdwParams(lastPlotN || 49);
+            }
+        }
+
+        // Compute auto IDW params based on point count N
+        function getAutoParams(N) {
+            // 49pts: power=1.1, blur=2 (v6-like: global, smooth, minimal blur needed)
+            // 361pts: power=2.0, blur=6 (user-tuned: local, needs more blur)
+            // Linear interpolation for anything in between
+            let t = Math.max(0, Math.min(1, (N - 49) / (361 - 49)));
+            let power = 1.1 + t * (2.0 - 1.1);   // 1.1 → 2.0
+            let blur = Math.round(2 + t * (6 - 2)); // 2 → 6
+            return { power, blur };
+        }
+
+        function applyAutoIdwParams(N) {
+            let p = getAutoParams(N);
+            let pwrSlider = document.getElementById('idwPower');
+            let blurSlider = document.getElementById('gaussBlur');
+            pwrSlider.value = Math.round(p.power * 10);
+            blurSlider.value = p.blur;
+            document.getElementById('idwPowerVal').textContent = p.power.toFixed(1);
+            document.getElementById('gaussBlurVal').textContent = p.blur;
+        }
+
+        function getIdwPower() { return parseFloat(document.getElementById('idwPower').value) / 10; }
+        function getBlurPasses() { return parseInt(document.getElementById('gaussBlur').value); }
+
+        // Re-plot with current data
+        function replotWithCurrentData() {
+            if(!statsHistoryData.length) return;
+            let e = statsHistoryData[0];
+            gPts = []; mRad = 0;
+            isDelta = e.isDelta || false; mapLbl = e.mapLbl || "Thickness";
+            let xD = e.xD, yD = e.yD, zD = e.zD;
+            for(let i = 0; i < xD.length; i++) {
+                let x = xD[i], y = yD[i], z = zD[i], r = Math.sqrt(x*x+y*y), a = Math.atan2(y,x)*180/Math.PI;
+                if(r > mRad) mRad = r;
+                gPts.push({x, y, z, r, a: a>=0?a:a+360});
+            }
+            plot2D(xD, yD, zD);
+            plotLineProfile();
+        }
+
+        // Notes sync
+        function syncNotesToStats() {
+            if(statsHistoryData.length > 0) {
+                let note = document.getElementById('mapNotesInput').value.trim();
+                statsHistoryData[0].notes = note;
+                saveNoteForEntry(statsHistoryData[0].name, note);
+                renderStatsHistory();
+            }
+        }
+        function updateMapNotes() {
+            let input = document.getElementById('mapNotesInput');
+            if(statsHistoryData.length > 0) { input.value = statsHistoryData[0].notes || ''; input.style.display = 'block'; }
+            else { input.value = ''; input.style.display = 'none'; }
+        }
+
+        // Right-top info
+        function updateMapInfoBlock(engineText) {
+            let block = document.getElementById('mapInfoBlock'), lines = [];
+            if(engineText) lines.push(engineText);
+            if(statsHistoryData.length > 0) {
+                let e = statsHistoryData[0];
+                let avg2 = parseFloat(e.avg).toFixed(2), max2 = parseFloat(e.max).toFixed(2), min2 = parseFloat(e.min).toFixed(2);
+                let uni2 = e.uni, s2s2 = e.s2s;
+                if(uni2!=='N/A'){let v=parseFloat(uni2);if(!isNaN(v))uni2=v.toFixed(2)+'%';}
+                if(s2s2!=='N/A'){let v=parseFloat(s2s2);if(!isNaN(v))s2s2=v.toFixed(2)+'%';}
+                lines.push(`Pts:${e.pts} | Avg:${avg2} | Max:${max2} | Min:${min2} | NU:${uni2} | S2S:${s2s2}`);
+            }
+            block.innerHTML = lines.join('<br>');
+        }
+
+        // --- Statistics History ---
+        function renderStatsHistory() {
+            let c = document.getElementById('statsHistory'); c.innerHTML = '';
+            statsHistoryData.forEach((entry, idx) => {
+                let cur = (idx === 0), div = document.createElement('div');
+                div.className = 'stats-entry' + (cur ? ' current' : '');
+                let html = `<div class="stats-entry-title" title="${entry.name}">${cur?'● ':''}${entry.name}</div>
+                    <div class="stats-row"><span class="s-label">Pts</span><span class="s-value">${entry.pts}</span></div>
+                    <div class="stats-row"><span class="s-label">NU%</span><span class="s-value">${entry.uni}</span></div>
+                    <div class="stats-row"><span class="s-label">S2S%</span><span class="s-value">${entry.s2s}</span></div>`;
+                if(entry.notes) html += `<div class="stats-notes">${entry.notes}</div>`;
+                div.innerHTML = html;
+                div.onclick = () => restoreHistoryEntry(idx);
+                c.appendChild(div);
+            });
+        }
+        function clearStatsHistory() {
+            if(statsHistoryData.length > 1 && confirm("Clear all history except current?")) {
+                statsHistoryData = statsHistoryData.slice(0, 1); renderStatsHistory();
+            }
+        }
+
+        function restoreHistoryEntry(idx) {
+            if(idx < 0 || idx >= statsHistoryData.length) return;
+            let entryData = statsHistoryData.splice(idx, 1)[0];
+            statsHistoryData.unshift(entryData);
+            gPts = []; mRad = 0;
+            isDelta = entryData.isDelta || false; mapLbl = entryData.mapLbl || "Thickness";
+            currentZMin = entryData.currentZMin; currentZMax = entryData.currentZMax;
+            if(entryData.xyPattern) document.getElementById('xyPatternSelect').value = entryData.xyPattern;
+            document.getElementById('mapTitle').innerText = entryData.mapTitle || "2D Contour Map";
+            document.getElementById('clampMin').value = currentZMin ? currentZMin.toFixed(4) : '';
+            document.getElementById('clampMax').value = currentZMax ? currentZMax.toFixed(4) : '';
+            let xD=entryData.xD||[], yD=entryData.yD||[], zD=entryData.zD||[];
+            for(let i=0;i<xD.length;i++){
+                let x=xD[i],y=yD[i],z=zD[i],r=Math.sqrt(x*x+y*y),a=Math.atan2(y,x)*180/Math.PI;
+                if(r>mRad) mRad=r; gPts.push({x,y,z,r,a:a>=0?a:a+360});
+            }
+            plot2D(xD, yD, zD); plotLineProfile();
+            renderStatsHistory(); updateMapNotes();
+        }
+
+        // --- Processing ---
+        const parseCol = t => (t ? t.split('\n').map(l=>parseFloat(l.trim())).filter(v=>!isNaN(v)) : []);
+        function processData() {
+            let pattern = document.getElementById('xyPatternSelect').value;
+            let xD = COORD_PRESETS[pattern].x.slice(), yD = COORD_PRESETS[pattern].y.slice();
+            let w1R = document.getElementById('w1Input').value.trim(), w2R = document.getElementById('w2Input').value.trim();
+            if(!xD.length || !w1R) return alert("Select pattern and provide Wafer 1 THK.");
+            let w1 = parseCol(w1R), w2 = parseCol(w2R);
+            if(xD.length !== w1.length) return alert(`Mismatch! XY:${xD.length}, W1:${w1.length}`);
+            let n1 = document.getElementById('thkSelect1').value || document.getElementById('thkName1').value || "W1";
+            let n2 = document.getElementById('thkSelect2').value || document.getElementById('thkName2').value || "W2";
+            let zD=[]; isDelta = w2.length > 0;
+            if(isDelta) {
+                if(w1.length!==w2.length) return alert(`Mismatch! W1:${w1.length}, W2:${w2.length}`);
+                zD = w1.map((v,i) => w2[i]-v); mapLbl = "Delta (W2-W1)";
+                document.getElementById('mapTitle').innerText = `${n2} - ${n1} (Delta)`;
+            } else { zD = w1; mapLbl = "Thickness"; document.getElementById('mapTitle').innerText = `${n1} (Thickness)`; }
+            gPts=[]; mRad=0; let zS=0, zMax=-Infinity, zMin=Infinity;
+            xD.forEach((x,i)=>{
+                let z=zD[i],r=Math.sqrt(x*x+yD[i]*yD[i]),a=Math.atan2(yD[i],x)*180/Math.PI;
+                if(r>mRad) mRad=r; if(z>zMax) zMax=z; if(z<zMin) zMin=z; zS+=z;
+                gPts.push({x,y:yD[i],z,r,a:a>=0?a:a+360});
+            });
+            let n=zD.length, avg=zS/n, uni = isDelta?"N/A":(((zMax-zMin)/(2*avg))*100).toFixed(2)+"%";
+            currentZMin=zMin; currentZMax=zMax;
+            document.getElementById('clampMin').value = zMin.toFixed(4);
+            document.getElementById('clampMax').value = zMax.toFixed(4);
+            let xM=0,yM=0; xD.forEach((x,i)=>{xM+=x;yM+=yD[i];}); xM/=n; yM/=n;
+            let sxx=0,syy=0,sxy=0,sxz=0,syz=0;
+            xD.forEach((x,i)=>{ let cx=x-xM,cy=yD[i]-yM,cz=zD[i]-avg; sxx+=cx*cx;syy+=cy*cy;sxy+=cx*cy;sxz+=cx*cz;syz+=cy*cz; });
+            let det=sxx*syy-sxy*sxy, s2s=0;
+            if(det!==0&&!isDelta){ let a=(sxz*syy-syz*sxy)/det, b=(sxx*syz-sxy*sxz)/det; s2s=(2*mRad*Math.sqrt(a*a+b*b))/(2*avg)*100; }
+            let entryName = isDelta?`${n2} - ${n1}`:n1, mapTitle = document.getElementById('mapTitle').innerText;
+            let existingIdx = statsHistoryData.findIndex(h=>h.name===entryName);
+            if(existingIdx >= 0) { restoreHistoryEntry(existingIdx); return; }
+            statsHistoryData.unshift({
+                name:entryName, pts:n, avg:avg.toFixed(4), max:zMax.toFixed(4), min:zMin.toFixed(4),
+                uni:uni, s2s:isDelta?"N/A":s2s.toFixed(2)+"%",
+                xD, yD, zD, isDelta, mapLbl, mapTitle,
+                xyPattern:pattern, currentZMin, currentZMax,
+                notes: getNoteForEntry(entryName)
+            });
+            if(statsHistoryData.length > 20) statsHistoryData.pop();
+            renderStatsHistory();
+            document.getElementById('statsCard').style.display = 'block';
+            plot2D(xD, yD, zD);
+            document.getElementById('lineCard').style.display = 'block';
+            plotLineProfile();
+            updateMapNotes();
+        }
+
+        // =====================================================
+        //  IDW ENGINE v2 + GAUSSIAN BLUR POST-PROCESSING
+        //  - Internal smooth auto-calculated from N (v6 formula)
+        //  - No exact-match shortcut (prevents spikes)
+        //  - Power & Blur: Auto mode or manual
+        // =====================================================
+
+        // Gaussian blur on 2D grid (respects null = outside wafer)
+        function gaussianBlur(grid, gs, passes) {
+            if(passes <= 0) return grid;
+            const k = [[1/16,2/16,1/16],[2/16,4/16,2/16],[1/16,2/16,1/16]];
+            let src = grid;
+            for(let p = 0; p < passes; p++) {
+                let dst = new Array(gs);
+                for(let j = 0; j < gs; j++) {
+                    dst[j] = new Array(gs);
+                    for(let i = 0; i < gs; i++) {
+                        if(src[j][i] === null) { dst[j][i] = null; continue; }
+                        let sum = 0, wt = 0;
+                        for(let dj = -1; dj <= 1; dj++) {
+                            for(let di = -1; di <= 1; di++) {
+                                let nj = j+dj, ni = i+di;
+                                if(nj>=0 && nj<gs && ni>=0 && ni<gs && src[nj][ni] !== null) {
+                                    let w = k[dj+1][di+1]; sum += w * src[nj][ni]; wt += w;
+                                }
+                            }
+                        }
+                        dst[j][i] = wt > 0 ? sum/wt : src[j][i];
+                    }
+                }
+                src = dst;
+            }
+            return src;
+        }
+
+        function plot2D(xD, yD, zD) {
+            const gs = 150, N = xD.length;
+            lastPlotN = N;
+            let gX = [], gY = [];
+            let st = (2*mRad)/(gs-1), start = -mRad;
+            for(let i = 0; i < gs; i++) { gX.push(start + st*i); gY.push(start + st*i); }
+
+            let t0 = performance.now();
+
+            // Auto-set slider values if in Auto mode
+            if(document.getElementById('idwAuto').checked) {
+                applyAutoIdwParams(N);
+            }
+
+            // Read params from sliders (whether auto-set or manual)
+            let pwr = getIdwPower();
+            let blurPasses = getBlurPasses();
+
+            // Internal smooth: auto-calculated from N (v6 formula), never exposed to UI
+            // This is critical for 49pts to work properly
+            let sRat = Math.max(0.01, Math.min(0.25, 1.2 / Math.sqrt(N)));
+            let sSq = (mRad * sRat) ** 2;
+            let mRadSq = mRad * mRad * 1.01;
+
+            // --- IDW Interpolation ---
+            let gZ = new Array(gs);
+            for(let j = 0; j < gs; j++) {
+                gZ[j] = new Array(gs);
+                let gy = gY[j], gy2 = gy * gy;
+                for(let i = 0; i < gs; i++) {
+                    let gx = gX[i];
+                    if(gx*gx + gy2 > mRadSq) { gZ[j][i] = null; continue; }
+                    let num = 0, den = 0;
+                    for(let k = 0; k < N; k++) {
+                        let dx = gx - xD[k], dy = gy - yD[k];
+                        let d2 = dx*dx + dy*dy;
+                        let base = d2 + sSq;
+                        let w;
+                        if(pwr === 1.0) w = 1.0 / base;
+                        else if(pwr === 1.5) w = 1.0 / (base * Math.sqrt(base));
+                        else if(pwr === 2.0) w = 1.0 / (base * base);
+                        else w = 1.0 / Math.pow(base, pwr);
+                        num += w * zD[k];
+                        den += w;
+                    }
+                    gZ[j][i] = num / den;
+                }
+            }
+
+            // --- Gaussian Blur Post-Processing ---
+            if(blurPasses > 0) gZ = gaussianBlur(gZ, gs, blurPasses);
+
+            let elapsed = (performance.now() - t0).toFixed(0);
+            let engineText = `IDW | N=${N} | Pwr=${pwr.toFixed(1)} | Sm=${(sRat*100).toFixed(0)}%(auto) | Blur=${blurPasses} | ${elapsed}ms`;
+
+            // --- Plot ---
+            let nLevels = getContourLevels();
+            let lay = { margin:{t:10,b:40,l:40,r:20}, hovermode:'closest', plot_bgcolor:'#fff',
+                xaxis:{title:'X',zeroline:0,showgrid:0,range:[-mRad*1.15, mRad*1.15]},
+                yaxis:{title:'Y',zeroline:0,scaleanchor:'x',scaleratio:1,showgrid:0,range:[-mRad*1.15, mRad*1.15]},
+                shapes:[{type:'circle',x0:-mRad,y0:-mRad,x1:mRad,y1:mRad,line:{color:'black',width:2}}]
+            };
+            let showL = document.getElementById('showLabels').checked;
+            let traces = [
+                {x:gX, y:gY, z:gZ, type:'contour', autocontour:1, ncontours:nLevels,
+                 line:{smoothing:1.3,color:'rgba(0,0,0,0.2)',width:0.5},
+                 colorbar:{title:mapLbl,thickness:15,x:1.05},
+                 colorscale:getSelectedColorscale(), reversescale:isDelta},
+                {x:xD, y:yD, mode: showL?'markers+text':'none', type:'scatter',
+                 text:zD.map(z=>z.toFixed(2)), textposition:'middle right',
+                 marker:{size:showL?5:0,color:'black',opacity:showL?1:0},
+                 textfont:{size:10,color:'black'}, hoverinfo:'none'}
+            ];
+            Plotly.newPlot('waferPlot', traces, lay, {responsive:true});
+            updateMapInfoBlock(engineText);
+        }
+
+        // --- Line Profile ---
+        function plotLineProfile() {
+            if(!gPts.length) return;
+            let t = document.getElementById('lineType').value, pts=[], x=[], y=[], xl="", tl="";
+            let lineTol = mRad*0.05, edgeTol = mRad*0.05;
+            if(t==='horizontal') { pts=gPts.filter(p=>Math.abs(p.y)<=lineTol).sort((a,b)=>a.x-b.x); x=pts.map(p=>p.x); xl="X"; tl="Horizontal (Y≈0)"; }
+            else if(t==='vertical') { pts=gPts.filter(p=>Math.abs(p.x)<=lineTol).sort((a,b)=>a.y-b.y); x=pts.map(p=>p.y); xl="Y"; tl="Vertical (X≈0)"; }
+            else { pts=gPts.filter(p=>p.r>=mRad-edgeTol).sort((a,b)=>a.a-b.a); x=pts.map(p=>p.a); xl="Angle"; tl="Circumferential Edge"; }
+            y = pts.map(p=>p.z);
+            if(!x.length) document.getElementById('linePlot').innerHTML = "<p style='color:red;text-align:center;margin-top:50px;'>No points found.</p>";
+            else Plotly.newPlot('linePlot', [{x,y,type:'scatter',mode:'lines+markers',marker:{size:8,color:'#0056b3'},line:{width:2}}],
+                {title:{text:tl,font:{size:14}},margin:{t:30,b:40,l:50,r:20},xaxis:{title:xl},yaxis:{title:mapLbl},plot_bgcolor:'#fafafa'}, {responsive:true});
+            let sh = [{type:'circle',x0:-mRad,y0:-mRad,x1:mRad,y1:mRad,line:{color:'black',width:2}}], an = [];
+            let ls = {color:'black',size:12,weight:'bold'}, bg = 'rgba(255,255,255,0.8)';
+            if(t==='horizontal') { sh.push({type:'line',x0:-mRad,y0:0,x1:mRad,y1:0,line:{color:'black',width:3,dash:'dashdot'}}); an.push({x:mRad,y:0,text:'Y=0',showarrow:true,ax:40,ay:0,font:ls,bgcolor:bg}); }
+            else if(t==='vertical') { sh.push({type:'line',x0:0,y0:-mRad,x1:0,y1:mRad,line:{color:'black',width:3,dash:'dashdot'}}); an.push({x:0,y:mRad,text:'X=0',showarrow:true,ax:0,ay:-30,font:ls,bgcolor:bg}); }
+            else { sh[0].dash='dot'; ls.size=14; bg='rgba(255,255,255,0.9)';
+                [[mRad,0,'0°',30,0],[0,mRad,'90°',0,-30],[-mRad,0,'180°',-30,0],[0,-mRad,'270°',0,30]].forEach(d=>an.push({x:d[0],y:d[1],text:d[2],showarrow:true,ax:d[3],ay:d[4],font:ls,bgcolor:bg})); }
+            Plotly.relayout('waferPlot', {shapes:sh, annotations:an});
+        }
+    </script>
+</body>
+</html>
