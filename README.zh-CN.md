@@ -1,4 +1,4 @@
-# Polar Mapper
+# Wafer Mapper
 
 [English README](./README.md)
 
@@ -191,7 +191,7 @@ Delta = W2 - W1
 推荐使用本地 HTTP 服务，尤其是在调试缓存、存储隔离或准备部署到 GitHub Pages 时。
 
 ```bash
-cd "Polar Mapper V0.4.3"
+cd "Wafer-Mapper"
 python3 -m http.server 8766
 ```
 
@@ -204,7 +204,7 @@ http://localhost:8766/THK%20MAP%20v9.html
 ## 文件结构
 
 ```text
-Polar Mapper V0.4.3/
+Wafer-Mapper/
 ├── THK MAP v9.html        # 主页面，包含 UI、统计逻辑、绘图逻辑
 ├── coords.js              # 坐标模板数据库与自动解析逻辑
 ├── wafer_data_backup.json # 脱敏后的 demo 备份数据

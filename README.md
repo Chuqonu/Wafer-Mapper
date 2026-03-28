@@ -195,7 +195,7 @@ Good for:
 Using a local HTTP server is recommended when you want cleaner browser-origin separation, easier testing, or future GitHub Pages deployment.
 
 ```bash
-cd "Polar Mapper V0.4.3"
+cd "Wafer-Mapper"
 python3 -m http.server 8766
 ```
 
@@ -208,7 +208,7 @@ http://localhost:8766/THK%20MAP%20v9.html
 ## Project Structure
 
 ```text
-Polar Mapper V0.4.3/
+Wafer-Mapper/
 ├── THK MAP v9.html        # Main page: UI, statistics, plotting logic
 ├── coords.js              # Coordinate preset database and parser
 ├── wafer_data_backup.json # Sanitized demo backup data
