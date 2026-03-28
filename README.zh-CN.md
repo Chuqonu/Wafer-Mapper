@@ -4,6 +4,18 @@
 
 一个面向晶圆厚度/轮廓数据的轻量级可视化工具。项目目前是纯前端静态页面，不依赖构建流程，打开即可使用。它支持将离散测点数据映射为 2D 等高线图，并生成 1D 剖面曲线，适合快速查看 wafer profile、比较两片 wafer 的差值分布，以及做一些基础统计分析。
 
+## 示例截图
+
+下面两张图基于仓库中已经脱敏的 demo 数据生成。
+
+### 2D Thickness Map
+
+![Demo 361P thickness map](./docs/images/demo-361p-thickness.png)
+
+### 1D Circumferential Line Profile
+
+![Demo 361P circumferential line profile](./docs/images/demo-361p-line-profile.png)
+
 ## 功能概览
 
 - 支持两套内置坐标模板：`49P` 和 `361P`
@@ -205,11 +217,17 @@ http://localhost:8766/
 
 ```text
 Wafer-Mapper/
+├── docs/
+│   └── images/
+│       ├── demo-361p-line-profile.png
+│       └── demo-361p-thickness.png
 ├── index.html             # 主页面，包含 UI、统计逻辑、绘图逻辑
 ├── coords.js              # 坐标模板数据库与自动解析逻辑
 ├── wafer_data_backup.json # 脱敏后的 demo 备份数据
 ├── README.md              # 英文版项目说明
 ├── README.zh-CN.md        # 中文版项目说明
+├── scripts/
+│   └── generate_readme_screenshots.js
 └── LICENSE                # MIT 许可证
 ```
 

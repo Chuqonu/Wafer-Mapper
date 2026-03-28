@@ -6,6 +6,18 @@ Wafer Mapper is a lightweight browser-based visualization tool for wafer thickne
 
 The tool converts discrete measurement points into a 2D contour map and a 1D profile view, making it useful for quick wafer profile checks, `W2 - W1` delta comparison, and basic uniformity analysis.
 
+## Screenshots
+
+The examples below are generated from the sanitized demo dataset included in this repository.
+
+### 2D Thickness Map
+
+![Demo 361P thickness map](./docs/images/demo-361p-thickness.png)
+
+### 1D Circumferential Line Profile
+
+![Demo 361P circumferential line profile](./docs/images/demo-361p-line-profile.png)
+
 ## Features
 
 - Built-in coordinate presets for `49P` and `361P`
@@ -209,11 +221,17 @@ http://localhost:8766/
 
 ```text
 Wafer-Mapper/
+├── docs/
+│   └── images/
+│       ├── demo-361p-line-profile.png
+│       └── demo-361p-thickness.png
 ├── index.html             # Main page: UI, statistics, plotting logic
 ├── coords.js              # Coordinate preset database and parser
 ├── wafer_data_backup.json # Sanitized demo backup data
 ├── README.md              # English project documentation
 ├── README.zh-CN.md        # Chinese project documentation
+├── scripts/
+│   └── generate_readme_screenshots.js
 └── LICENSE                # MIT license
 ```
 
