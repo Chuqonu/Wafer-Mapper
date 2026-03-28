@@ -29,7 +29,7 @@ The tool converts discrete measurement points into a 2D contour map and a 1D pro
 
 ## Main UI
 
-The current entry file is [`THK MAP v9.html`](./THK%20MAP%20v9.html).
+The current entry file is [`index.html`](./index.html).
 
 ### Left Panel
 
@@ -183,7 +183,7 @@ Click `Import Data` and choose a backup JSON file to restore:
 
 ### Option 1: Open the HTML File Directly
 
-Open [`THK MAP v9.html`](./THK%20MAP%20v9.html) in a browser.
+Open [`index.html`](./index.html) in a browser.
 
 Good for:
 
@@ -202,14 +202,14 @@ python3 -m http.server 8766
 Then open:
 
 ```text
-http://localhost:8766/THK%20MAP%20v9.html
+http://localhost:8766/
 ```
 
 ## Project Structure
 
 ```text
 Wafer-Mapper/
-├── THK MAP v9.html        # Main page: UI, statistics, plotting logic
+├── index.html             # Main page: UI, statistics, plotting logic
 ├── coords.js              # Coordinate preset database and parser
 ├── wafer_data_backup.json # Sanitized demo backup data
 ├── README.md              # English project documentation
@@ -233,7 +233,7 @@ Notes:
 
 - Most logic is still concentrated in a single HTML file
 - Some UI rendering still relies on `innerHTML`, which should be hardened if the project is distributed more broadly
-- The main entry file name contains spaces; it works, but `index.html` would be cleaner for deployment
+- The main entry file is now `index.html`, which is cleaner for direct hosting and GitHub Pages deployment
 - There are no automated tests yet
 - The UI is primarily optimized for desktop usage
 

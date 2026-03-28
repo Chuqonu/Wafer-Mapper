@@ -26,7 +26,7 @@
 
 ## 界面说明
 
-页面主入口是 [`THK MAP v9.html`](./THK%20MAP%20v9.html)。
+页面主入口是 [`index.html`](./index.html)。
 
 左侧输入区：
 
@@ -179,7 +179,7 @@ Delta = W2 - W1
 
 ### 方式一：直接打开文件
 
-直接双击 [`THK MAP v9.html`](./THK%20MAP%20v9.html) 即可。
+直接双击 [`index.html`](./index.html) 即可。
 
 适合：
 
@@ -198,14 +198,14 @@ python3 -m http.server 8766
 浏览器访问：
 
 ```text
-http://localhost:8766/THK%20MAP%20v9.html
+http://localhost:8766/
 ```
 
 ## 文件结构
 
 ```text
 Wafer-Mapper/
-├── THK MAP v9.html        # 主页面，包含 UI、统计逻辑、绘图逻辑
+├── index.html             # 主页面，包含 UI、统计逻辑、绘图逻辑
 ├── coords.js              # 坐标模板数据库与自动解析逻辑
 ├── wafer_data_backup.json # 脱敏后的 demo 备份数据
 ├── README.md              # 英文版项目说明
@@ -229,7 +229,7 @@ Wafer-Mapper/
 
 - 当前主逻辑集中在单个 HTML 文件中，便于快速迭代，但不利于后续维护和模块化
 - 页面仍依赖 `innerHTML` 拼接部分 UI，如果后续要做公开分发，建议改为更安全的 DOM 构造方式
-- 仓库当前主入口文件名包含空格，部署到 GitHub Pages 虽然可用，但后续更适合改为 `index.html`
+- 当前主入口文件已经改为 `index.html`，更适合直接静态托管和 GitHub Pages 部署
 - 目前没有自动化测试
 - 目前没有专门的移动端交互优化，主要面向桌面浏览器
 
