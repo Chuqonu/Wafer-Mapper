@@ -1,61 +1,67 @@
-# Polar Mapper
+# Wafer Mapper
 
-一个面向晶圆厚度/轮廓数据的轻量级可视化工具。项目目前是纯前端静态页面，不依赖构建流程，打开即可使用。它支持将离散测点数据映射为 2D 等高线图，并生成 1D 剖面曲线，适合快速查看 wafer profile、比较两片 wafer 的差值分布，以及做一些基础统计分析。
+[中文说明](./README.zh-CN.md)
 
-## 功能概览
+Wafer Mapper is a lightweight browser-based visualization tool for wafer thickness and profile data. It is currently a pure static frontend project with no build step, so you can open it directly in a browser and start using it.
 
-- 支持两套内置坐标模板：`49P` 和 `361P`
-- 支持单片厚度图和双片差值图 `W2 - W1`
-- 自动计算基础统计量：
+The tool converts discrete measurement points into a 2D contour map and a 1D profile view, making it useful for quick wafer profile checks, `W2 - W1` delta comparison, and basic uniformity analysis.
+
+## Features
+
+- Built-in coordinate presets for `49P` and `361P`
+- Single-wafer thickness mapping
+- Dual-wafer delta mapping using `W2 - W1`
+- Basic statistics:
   - `Avg`
   - `Max`
   - `Min`
-  - `NU%`（Non-Uniformity）
-  - `S2S%`（Site-to-Site / 平面倾斜相关指标）
-- 使用 `IDW` 插值生成 2D contour map
-- 使用高斯模糊做后处理，减少局部尖峰和锯齿感
-- 支持 1D line profile：
+  - `NU%` (Non-Uniformity)
+  - `S2S%` (plane-fit / slope-related metric)
+- 2D contour visualization using `IDW` interpolation
+- Gaussian blur post-processing for smoother maps
+- 1D line profiles:
   - `Horizontal (Y≈0)`
   - `Vertical (X≈0)`
   - `Circumference (0°-360°)`
-- 支持本地保存常用 THK 数据
-- 支持导入/导出备份 JSON
-- 支持历史结果卡片和备注
+- Local saving of commonly used THK datasets
+- JSON import/export for backup and transfer
+- History cards with notes
 
-## 界面说明
+## Main UI
 
-页面主入口是 [`THK MAP v9.html`](./THK%20MAP%20v9.html)。
+The current entry file is [`THK MAP v9.html`](./THK%20MAP%20v9.html).
 
-左侧输入区：
+### Left Panel
 
 - `XY Coord Pattern`
-  - 选择测点坐标模板，目前支持 `49P` 和 `361P`
+  - Selects the measurement coordinate preset
+  - Currently supports `49P` and `361P`
 - `Wafer 1 THK`
-  - 输入或加载第一片 wafer 的厚度数据
+  - Input or load the first wafer thickness dataset
 - `Wafer 2 THK`
-  - 可选
-  - 如果填写，系统会自动计算 `W2 - W1`
+  - Optional
+  - If provided, the tool will generate `W2 - W1`
 - `Generate Maps`
-  - 生成 2D 图和 1D 剖面图
+  - Builds the 2D map and the 1D profile chart
 
-右侧图形区：
+### Right Panel
 
 - `2D Contour Map`
-  - 显示插值后的 wafer map
-  - 可切换色表、颜色范围、等高线层数、标签显示
+  - Displays the interpolated wafer map
+  - Supports colorscale switching, contour density, value labels, and manual range control
 - `IDW Tuning`
-  - 支持自动/手动调整插值幂次与 blur 次数
+  - Allows automatic or manual control of interpolation power and blur passes
 - `Wafer Statistics`
-  - 显示历史结果卡片
-  - 点击历史卡片可恢复对应图形
+  - Shows current and historical entries
+  - Clicking a history card restores the corresponding map
 - `1D Line Profile`
-  - 显示某一方向上的剖面曲线
+  - Shows a profile slice through the wafer
 
-## 输入数据格式
+## Input Format
 
-### 1. 厚度数据
+### Thickness Data
 
-厚度数据按“每行一个数值”的形式输入，例如：
+Thickness input should be one numeric value per line, for example:
 
 ```text
 5.1200
@@ -65,192 +71,194 @@
 ...
 ```
 
-要求：
+Rules:
 
-- `49P` 模式下需要 49 个数值
-- `361P` 模式下需要 361 个数值
-- 可以带空行，程序会自动忽略无法解析的行
-- 当 `Wafer 2 THK` 有值时，长度必须与 `Wafer 1 THK` 一致
+- `49P` mode requires 49 values
+- `361P` mode requires 361 values
+- Empty or non-numeric lines are ignored
+- If `Wafer 2 THK` is provided, its length must match `Wafer 1 THK`
 
-### 2. 坐标模板
+### Coordinate Presets
 
-坐标模板定义在 [`coords.js`](./coords.js) 中。当前内置：
+Coordinate presets are defined in [`coords.js`](./coords.js). The current built-in presets are:
 
 - `49P`
 - `361P`
 
-如果后续要扩展新的测点格式，只需要在 `rawCoords` 中补充新的坐标数据，解析逻辑会自动生成对应的 `COORD_PRESETS`。
+To add a new pattern later, you only need to add another coordinate block to `rawCoords`. The parser automatically converts it into a `COORD_PRESETS` entry.
 
-## 结果与统计说明
+## Modes and Statistics
 
-### 1. 单片模式
+### Single-Wafer Mode
 
-当只提供 `Wafer 1 THK` 时，页面生成该 wafer 的 thickness map。
+If only `Wafer 1 THK` is provided, the tool renders a thickness map for that wafer.
 
-统计项含义：
+Statistics:
 
-- `Avg`：平均值
-- `Max`：最大值
-- `Min`：最小值
-- `NU%`：`((Max - Min) / (2 * Avg)) * 100`
-- `S2S%`：基于平面拟合得到的全片倾斜相关指标
+- `Avg`: average value
+- `Max`: maximum value
+- `Min`: minimum value
+- `NU%`: `((Max - Min) / (2 * Avg)) * 100`
+- `S2S%`: a slope-related metric derived from a plane-fit calculation
 
-### 2. 差值模式
+### Delta Mode
 
-当同时提供 `Wafer 1 THK` 和 `Wafer 2 THK` 时，页面生成：
+If both `Wafer 1 THK` and `Wafer 2 THK` are provided, the tool generates:
 
 ```text
 Delta = W2 - W1
 ```
 
-在差值模式下：
+In delta mode:
 
-- 色表会使用适合正负差异的配色
-- `mapLbl` 会变成 `Delta (W2-W1)`
-- `NU%` 和 `S2S%` 会显示为 `N/A`
+- A diverging colorscale is used
+- The map label becomes `Delta (W2-W1)`
+- `NU%` and `S2S%` are shown as `N/A`
 
-## 可视化与算法说明
+## Visualization and Algorithm Notes
 
-### 1. 2D 插值
+### 2D Interpolation
 
-工具使用 `IDW (Inverse Distance Weighting)` 对离散测点进行插值，生成规则网格上的 `contour` 数据。
+The tool uses `IDW` (Inverse Distance Weighting) to interpolate discrete measurement points onto a regular grid and render a contour map.
 
-可调参数：
+Main controls:
 
 - `Power`
-  - 控制距离衰减速度
-  - 数值越高，局部点影响越强
+  - Controls how strongly nearby points dominate the interpolation
+  - Higher values make the map more local and sharper
 - `Blur`
-  - 使用高斯模糊进行后处理
-  - 用于减弱噪声、降低局部尖峰
+  - Applies Gaussian blur after interpolation
+  - Helps reduce spikes and visual roughness
 
-工具默认提供 `Auto` 模式，会根据点数自动选择参数：
+The default `Auto` mode adjusts parameters based on point count:
 
-- `49P` 更平滑、更偏全局
-- `361P` 更偏局部细节，并配更高 blur
+- `49P` is tuned to be smoother and more global
+- `361P` is tuned to preserve more local detail, with stronger blur compensation
 
-### 2. 1D 剖面
+### 1D Profiles
 
-提供三种剖面方式：
+Three profile modes are available:
 
-- `Horizontal (Y≈0)`：提取接近水平中心线的数据点
-- `Vertical (X≈0)`：提取接近垂直中心线的数据点
-- `Circumference (0°-360°)`：提取靠近 wafer 边缘的点，并按角度排序
+- `Horizontal (Y≈0)`: points near the horizontal center line
+- `Vertical (X≈0)`: points near the vertical center line
+- `Circumference (0°-360°)`: edge points sorted by angle
 
-### 3. 颜色与显示控制
+### Display Controls
 
-支持：
+The contour panel supports:
 
-- 切换颜色表
-- 自动或手动设置颜色范围
-- 调整等高线层数
-- 显示/隐藏原始测点数值标签
+- Colorscale switching
+- Automatic or manual z-range control
+- Contour level adjustment
+- Value label toggle for raw measurement points
 
-## 数据保存与备份
+## Local Storage and Backups
 
-工具会使用浏览器 `localStorage` 保存部分本地数据。
+The app stores part of its data in browser `localStorage`.
 
-当前用到的主要 key：
+Current keys include:
 
 - `wafer_app_thk`
 - `wafer_app_notes`
 
-这意味着：
+This means:
 
-- 同一个浏览器、同一个 origin 下，刷新页面后数据还会在
-- `file://` 和 `http://localhost:xxxx` 是不同的存储空间
-- 换一个端口，例如 `8765` 和 `8766`，也会被视为不同 origin
+- Data persists when you refresh the page under the same browser and origin
+- `file://` and `http://localhost:xxxx` do not share the same storage
+- Different ports such as `8765` and `8766` are treated as different origins
 
-### 导出备份
+### Export
 
-点击 `Export Backup` 会导出一个 JSON 文件。当前仓库中提供的 [`wafer_data_backup.json`](./wafer_data_backup.json) 为脱敏 demo 数据，可用于演示导入流程。
+Click `Export Backup` to download a JSON backup file. The repository includes a sanitized demo backup in [`wafer_data_backup.json`](./wafer_data_backup.json).
 
-### 导入备份
+### Import
 
-点击 `Import Data` 并选择导出的 JSON 文件即可恢复：
+Click `Import Data` and choose a backup JSON file to restore:
 
-- 保存过的 THK 数据
-- 历史结果
-- 备注
+- Saved THK datasets
+- History entries
+- Notes
 
-## 本地运行
+## Running Locally
 
-### 方式一：直接打开文件
+### Option 1: Open the HTML File Directly
 
-直接双击 [`THK MAP v9.html`](./THK%20MAP%20v9.html) 即可。
+Open [`THK MAP v9.html`](./THK%20MAP%20v9.html) in a browser.
 
-适合：
+Good for:
 
-- 快速查看
-- 个人本地使用
+- Quick checks
+- Personal offline use
 
-### 方式二：通过 localhost 打开
+### Option 2: Run Through localhost
 
-推荐使用本地 HTTP 服务，尤其是在调试缓存、存储隔离或准备部署到 GitHub Pages 时。
+Using a local HTTP server is recommended when you want cleaner browser-origin separation, easier testing, or future GitHub Pages deployment.
 
 ```bash
 cd "Polar Mapper V0.4.3"
 python3 -m http.server 8766
 ```
 
-浏览器访问：
+Then open:
 
 ```text
 http://localhost:8766/THK%20MAP%20v9.html
 ```
 
-## 文件结构
+## Project Structure
 
 ```text
 Polar Mapper V0.4.3/
-├── THK MAP v9.html        # 主页面，包含 UI、统计逻辑、绘图逻辑
-├── coords.js              # 坐标模板数据库与自动解析逻辑
-├── wafer_data_backup.json # 脱敏后的 demo 备份数据
-└── README.md              # 项目说明
+├── THK MAP v9.html        # Main page: UI, statistics, plotting logic
+├── coords.js              # Coordinate preset database and parser
+├── wafer_data_backup.json # Sanitized demo backup data
+├── README.md              # English project documentation
+├── README.zh-CN.md        # Chinese project documentation
+└── LICENSE                # MIT license
 ```
 
-## 技术栈
+## Tech Stack
 
-- 原生 `HTML`
-- 原生 `CSS`
-- 原生 `JavaScript`
-- [Plotly.js](https://plotly.com/javascript/) 用于 2D / 1D 可视化
+- Native `HTML`
+- Native `CSS`
+- Native `JavaScript`
+- [Plotly.js](https://plotly.com/javascript/) for 2D and 1D plotting
 
-说明：
+Notes:
 
-- 当前通过 CDN 加载 Plotly
-- 如果网络环境受限，页面可能无法正常加载 Plotly 脚本
+- Plotly is loaded from CDN
+- If your network environment cannot access the CDN, plotting will not load correctly
 
-## 已知限制
+## Current Limitations
 
-- 当前主逻辑集中在单个 HTML 文件中，便于快速迭代，但不利于后续维护和模块化
-- 页面仍依赖 `innerHTML` 拼接部分 UI，如果后续要做公开分发，建议改为更安全的 DOM 构造方式
-- 仓库当前主入口文件名包含空格，部署到 GitHub Pages 虽然可用，但后续更适合改为 `index.html`
-- 目前没有自动化测试
-- 目前没有专门的移动端交互优化，主要面向桌面浏览器
+- Most logic is still concentrated in a single HTML file
+- Some UI rendering still relies on `innerHTML`, which should be hardened if the project is distributed more broadly
+- The main entry file name contains spaces; it works, but `index.html` would be cleaner for deployment
+- There are no automated tests yet
+- The UI is primarily optimized for desktop usage
 
-## 后续可改进方向
+## Possible Next Steps
 
-- 将主逻辑拆分为独立 JS 模块
-- 增加更多坐标模板，例如 `137P`
-- 增加 CSV / TSV 导入
-- 增加截图导出或图像导出
-- 增加一键清空本地缓存按钮
-- 改造为更适合 GitHub Pages 的标准静态站点结构
+- Split plotting and data logic into separate JavaScript modules
+- Add more coordinate presets such as `137P`
+- Add CSV / TSV import
+- Add image export or snapshot export
+- Add a one-click clear-local-data action
+- Convert the project into a cleaner GitHub Pages structure
 
-## 隐私与样例数据说明
+## Privacy and Demo Data
 
-仓库中的 [`wafer_data_backup.json`](./wafer_data_backup.json) 已做脱敏处理：
+The repository version of [`wafer_data_backup.json`](./wafer_data_backup.json) has been sanitized:
 
-- 不包含真实 wafer ID
-- 不包含真实生产厚度数据
-- 仅保留与演示相关的点数结构和示例数值分布
+- No real wafer IDs
+- No real production thickness data
+- Only demo-compatible point counts and example distributions are preserved
 
-如果你要公开发布这个项目，建议继续保持：
+If you plan to keep this repository public, it is best to continue avoiding:
 
-- 不上传真实生产样本
-- 不上传客户信息
-- 不上传公司内部标识信息
+- Real production samples
+- Customer information
+- Internal company identifiers
 
 ## License
 
